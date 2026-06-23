@@ -1,0 +1,169 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =====================================================================
+   KIABI AI Guide — design system base
+   ===================================================================== */
+
+@layer base {
+  :root {
+    --kiabi-navy: 4 0 55; /* #040037 */
+    --kiabi-blue: 0 110 251; /* #006EFB */
+    --kiabi-cyan: 0 194 255; /* #00C2FF */
+    --ring: 0 110 251;
+  }
+
+  * {
+    border-color: rgb(4 0 55 / 0.08);
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-surface-soft text-ink antialiased;
+    background-image:
+      radial-gradient(70% 55% at 12% -5%, rgba(0, 110, 251, 0.1) 0%, transparent 55%),
+      radial-gradient(60% 50% at 100% 0%, rgba(0, 194, 255, 0.1) 0%, transparent 50%),
+      radial-gradient(55% 45% at 50% 110%, rgba(4, 0, 55, 0.06) 0%, transparent 60%);
+    background-attachment: fixed;
+    min-height: 100dvh;
+  }
+
+  ::selection {
+    background: rgba(0, 110, 251, 0.18);
+    color: #040037;
+  }
+
+  /* Focus visibility — accessible and on-brand */
+  :focus-visible {
+    outline: 2px solid rgb(var(--ring) / 0.9);
+    outline-offset: 2px;
+    border-radius: 0.4rem;
+  }
+
+  /* Custom scrollbar (subtle) */
+  ::-webkit-scrollbar {
+    width: 11px;
+    height: 11px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(4, 0, 55, 0.18);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(4, 0, 55, 0.32);
+    background-clip: content-box;
+  }
+}
+
+@layer components {
+  /* Glass surface — premium card backdrop */
+  .glass {
+    @apply bg-white/70 backdrop-blur-xl;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.7) inset,
+      0 2px 4px rgba(4, 0, 55, 0.04),
+      0 18px 40px -22px rgba(4, 0, 55, 0.28);
+  }
+
+  .glass-dark {
+    background: linear-gradient(150deg, rgba(10, 5, 82, 0.92), rgba(4, 0, 55, 0.96));
+    @apply backdrop-blur-xl text-white;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.08) inset,
+      0 30px 60px -28px rgba(4, 0, 55, 0.6);
+  }
+
+  /* Gradient text — KIABI blue → cyan */
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(120deg, #006efb 0%, #00c2ff 60%, #3fa9ff 100%);
+  }
+
+  .text-gradient-navy {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(120deg, #040037 0%, #0a0552 40%, #006efb 100%);
+  }
+
+  /* Hairline divider */
+  .hairline {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(4, 0, 55, 0.12) 20%,
+      rgba(4, 0, 55, 0.12) 80%,
+      transparent
+    );
+  }
+
+  /* Animated gradient border wrapper */
+  .gradient-ring {
+    position: relative;
+    isolation: isolate;
+  }
+  .gradient-ring::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(0, 110, 251, 0.6), rgba(0, 194, 255, 0.1), rgba(0, 110, 251, 0.45));
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* Shimmer sweep used on primary buttons */
+  .sheen::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, transparent 25%, rgba(255, 255, 255, 0.45) 48%, transparent 70%);
+    transform: translateX(-130%);
+    transition: transform 0.8s ease;
+  }
+  .sheen:hover::after {
+    transform: translateX(130%);
+  }
+
+  /* Noise/grain overlay utility */
+  .grain {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
+  }
+  .mask-fade-b {
+    -webkit-mask-image: linear-gradient(to bottom, #000 60%, transparent);
+    mask-image: linear-gradient(to bottom, #000 60%, transparent);
+  }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
