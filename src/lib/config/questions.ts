@@ -1,398 +1,303 @@
 // =====================================================================
 // QUESTIONS — the guided flow. Fully editable.
 //
+// PRINCIPLE: we ask about the employee's NEED and lived CONTEXT, never the
+// solution. No question or answer label names a service (Easy IA, Easy
+// Microsoft, Gen IA Factory…) or a routing technology (SharePoint, Power
+// Automate, "AI assistant", "custom development"…). The invisible scoring
+// engine translates these answers into a recommended service.
+//
 // ▸ Each answer adds points to one or more recommendation categories.
 // ▸ `showIf` enables lightweight branching (keeps the flow short).
-// ▸ `because` is the human-readable rationale surfaced on the result page.
+// ▸ `because` is the human-readable rationale surfaced on the result page —
+//   always phrased in the employee's NEED language, never naming a service.
 //
-// Branching summary (longest path ≈ 7 steps, "just exploring" ≈ 2 steps):
-//   Q1 main_goal           ── always
-//   Q2 microsoft_dependency ── unless exploring
-//   Q3 microsoft_tools      ── only if Microsoft matters (refines Easy MS)
-//   Q4 solution_shape       ── unless exploring
-//   Q5 complexity           ── unless exploring
-//   Q6 custom_dev           ── only if not "simple" and not exploring
-//   Q7 market_tool          ── unless exploring or already chose "buy"
-//   Q8 readiness            ── always
+// Branching summary ("just exploring" ≈ 2 steps, full path = 5 steps):
+//   Q1 maturity        ── always
+//   Q2 main_pain        ── always
+//   Q3 work_location    ── hidden when "just exploring"
+//   Q4 usage_scale      ── hidden when "just exploring"
+//   Q5 specificity      ── hidden when "just exploring"
 // =====================================================================
 
 import type { Question } from "./types";
 
 const isExploring = (a: Record<string, string[]>) =>
-  (a.main_goal ?? []).includes("explore");
-
-const microsoftMatters = (a: Record<string, string[]>) => {
-  const dep = a.microsoft_dependency ?? [];
-  return dep.includes("ms_central") || dep.includes("ms_some");
-};
+  (a.maturity ?? []).includes("exploring");
 
 export const QUESTIONS: Question[] = [
   {
-    id: "main_goal",
-    eyebrow: { fr: "Votre intention", en: "Your intent" },
-    title: { fr: "Quel est votre objectif principal ?", en: "What is your main goal?" },
+    id: "maturity",
+    eyebrow: { fr: "Votre démarche", en: "Your stage" },
+    title: { fr: "Où en êtes-vous avec ce besoin ?", en: "Where are you with this need?" },
     subtitle: {
-      fr: "Choisissez ce qui décrit le mieux votre besoin du moment.",
-      en: "Pick what best describes your need right now.",
+      fr: "Pas de mauvaise réponse — dites-nous simplement à quel stade vous en êtes.",
+      en: "No wrong answer — just tell us what stage you're at.",
     },
-    required: true,
-    options: [
-      {
-        id: "ai_assistant",
-        icon: "Sparkles",
-        label: { fr: "Créer un assistant IA", en: "Create an AI assistant" },
-        hint: { fr: "Répondre, générer, analyser du contenu", en: "Answer, generate, analyse content" },
-        scores: { easy_ia: 3 },
-        because: {
-          fr: "Vous visez avant tout un assistant IA pour un besoin métier concret.",
-          en: "You're primarily aiming for an AI assistant for a concrete business need.",
-        },
-      },
-      {
-        id: "automate_ms",
-        icon: "Workflow",
-        label: { fr: "Automatiser mes outils Microsoft", en: "Automate my Microsoft tools" },
-        hint: { fr: "Power Automate, SharePoint, M365…", en: "Power Automate, SharePoint, M365…" },
-        scores: { easy_microsoft: 3 },
-        because: {
-          fr: "Votre objectif tourne autour de l'automatisation et de l'écosystème Microsoft.",
-          en: "Your goal revolves around automation and the Microsoft ecosystem.",
-        },
-      },
-      {
-        id: "custom_tool",
-        icon: "Boxes",
-        label: { fr: "Construire un outil sur mesure", en: "Build a custom tool" },
-        hint: { fr: "Un produit interne, une vraie application", en: "An internal product, a real application" },
-        scores: { gen_ia_factory: 3 },
-        because: {
-          fr: "Vous envisagez un outil interne sur mesure, au-delà d'un simple assistant.",
-          en: "You're considering a tailored internal tool, beyond a simple assistant.",
-        },
-      },
-      {
-        id: "explore",
-        icon: "Compass",
-        label: { fr: "Comprendre ce qui est possible", en: "Understand what's possible" },
-        hint: { fr: "Je me renseigne avant de me lancer", en: "I'm exploring before getting started" },
-        scores: { faq: 3 },
-        because: {
-          fr: "Vous êtes en phase d'exploration : mieux vaut d'abord se documenter.",
-          en: "You're in an exploration phase: best to start with some learning material.",
-        },
-      },
-      {
-        id: "unsure",
-        icon: "HelpCircle",
-        label: { fr: "Je ne sais pas encore précisément", en: "I'm not quite sure yet" },
-        hint: { fr: "Mon besoin reste à clarifier", en: "My need still needs clarifying" },
-        scores: { generic: 2 },
-        because: {
-          fr: "Votre besoin mérite une qualification humaine pour être bien orienté.",
-          en: "Your need would benefit from a human qualification step.",
-        },
-      },
-    ],
-  },
-
-  {
-    id: "microsoft_dependency",
-    eyebrow: { fr: "Vos outils", en: "Your tools" },
-    title: {
-      fr: "Votre besoin s'appuie-t-il sur l'écosystème Microsoft ?",
-      en: "Does your need rely on the Microsoft ecosystem?",
-    },
-    subtitle: {
-      fr: "Excel, Outlook, Teams, SharePoint, Power Automate, Power Apps…",
-      en: "Excel, Outlook, Teams, SharePoint, Power Automate, Power Apps…",
-    },
-    required: true,
-    showIf: (a) => !isExploring(a),
-    options: [
-      {
-        id: "ms_central",
-        icon: "Layers",
-        label: { fr: "Oui, c'est au cœur du besoin", en: "Yes, it's central" },
-        scores: { easy_microsoft: 3 },
-        because: {
-          fr: "L'écosystème Microsoft est central : Easy Microsoft est taillé pour ça.",
-          en: "The Microsoft ecosystem is central — Easy Microsoft is built for that.",
-        },
-      },
-      {
-        id: "ms_some",
-        icon: "Blend",
-        label: { fr: "Un peu, mais pas indispensable", en: "Somewhat, but not essential" },
-        scores: { easy_microsoft: 1, easy_ia: 1 },
-      },
-      {
-        id: "ms_no",
-        icon: "CircleSlash",
-        label: { fr: "Non", en: "No" },
-        scores: { easy_ia: 1 },
-      },
-      {
-        id: "ms_unknown",
-        icon: "HelpCircle",
-        label: { fr: "Je ne sais pas", en: "I don't know" },
-        scores: { generic: 1 },
-      },
-    ],
-  },
-
-  {
-    id: "microsoft_tools",
-    eyebrow: { fr: "Périmètre Microsoft", en: "Microsoft scope" },
-    title: {
-      fr: "Quels usages Microsoft sont concernés ?",
-      en: "Which Microsoft capabilities are involved?",
-    },
-    subtitle: {
-      fr: "Plusieurs choix possibles — cela affine l'orientation.",
-      en: "Select all that apply — this refines the routing.",
-    },
-    multiple: true,
-    showIf: microsoftMatters,
-    options: [
-      {
-        id: "m365",
-        icon: "AppWindow",
-        label: { fr: "Excel, Outlook, Teams, PowerPoint", en: "Excel, Outlook, Teams, PowerPoint" },
-        scores: { easy_microsoft: 1 },
-      },
-      {
-        id: "sharepoint",
-        icon: "FolderTree",
-        label: { fr: "Données SharePoint", en: "SharePoint data" },
-        scores: { easy_microsoft: 2 },
-        because: {
-          fr: "Centraliser et exploiter des données SharePoint relève d'Easy Microsoft.",
-          en: "Centralising and using SharePoint data is an Easy Microsoft job.",
-        },
-      },
-      {
-        id: "power_automate",
-        icon: "Workflow",
-        label: { fr: "Workflows Power Automate", en: "Power Automate workflows" },
-        scores: { easy_microsoft: 2 },
-        because: {
-          fr: "Les workflows Power Automate sont au cœur d'Easy Microsoft.",
-          en: "Power Automate workflows are at the heart of Easy Microsoft.",
-        },
-      },
-      {
-        id: "power_apps",
-        icon: "LayoutGrid",
-        label: { fr: "Applications Power Apps", en: "Power Apps applications" },
-        scores: { easy_microsoft: 2 },
-        because: {
-          fr: "Construire une appli métier avec Power Apps, c'est Easy Microsoft.",
-          en: "Building a business app with Power Apps is Easy Microsoft.",
-        },
-      },
-      {
-        id: "reporting",
-        icon: "BarChart3",
-        label: { fr: "Tableaux de bord & reporting", en: "Dashboards & reporting" },
-        scores: { easy_microsoft: 2 },
-        because: {
-          fr: "Vos besoins de reporting s'adressent à Easy Microsoft.",
-          en: "Your reporting needs point to Easy Microsoft.",
-        },
-      },
-    ],
-  },
-
-  {
-    id: "solution_shape",
-    eyebrow: { fr: "La forme", en: "The shape" },
-    title: { fr: "Quelle solution imaginez-vous ?", en: "What kind of solution do you picture?" },
-    required: true,
-    showIf: (a) => !isExploring(a),
-    options: [
-      {
-        id: "assistant",
-        icon: "Bot",
-        label: { fr: "Un assistant qui génère / analyse", en: "An assistant that generates / analyses" },
-        scores: { easy_ia: 2 },
-        because: {
-          fr: "Un assistant conversationnel correspond parfaitement à Easy IA.",
-          en: "A conversational assistant is a perfect Easy IA fit.",
-        },
-      },
-      {
-        id: "workflow",
-        icon: "GitBranch",
-        label: { fr: "Une automatisation / un workflow", en: "An automation / a workflow" },
-        scores: { easy_microsoft: 2 },
-      },
-      {
-        id: "app",
-        icon: "LayoutGrid",
-        label: { fr: "Une application métier", en: "A business application" },
-        scores: { easy_microsoft: 2, gen_ia_factory: 1 },
-      },
-      {
-        id: "product",
-        icon: "Boxes",
-        label: { fr: "Un outil complexe et sur mesure", en: "A complex, tailored tool" },
-        scores: { gen_ia_factory: 3 },
-        because: {
-          fr: "Un outil complexe et sur mesure relève de la GEN IA Factory.",
-          en: "A complex, tailor-made tool is GEN IA Factory territory.",
-        },
-      },
-      {
-        id: "buy",
-        icon: "ShoppingBag",
-        label: { fr: "Un outil du marché existe peut-être", en: "Maybe a market tool already exists" },
-        scores: { external_tool: 3 },
-        because: {
-          fr: "Si une solution du marché existe, l'achat peut être plus pertinent.",
-          en: "If a market solution exists, buying may be more relevant.",
-        },
-      },
-    ],
-  },
-
-  {
-    id: "complexity",
-    eyebrow: { fr: "L'ampleur", en: "The scale" },
-    title: { fr: "Quelle est la complexité de votre besoin ?", en: "How complex is your need?" },
-    required: true,
-    showIf: (a) => !isExploring(a),
-    options: [
-      {
-        id: "simple",
-        icon: "Feather",
-        label: { fr: "Simple — une tâche précise", en: "Simple — one precise task" },
-        scores: { easy_ia: 2 },
-        because: {
-          fr: "Un besoin simple se traite très bien en une session Easy IA.",
-          en: "A simple need is well handled in a single Easy IA session.",
-        },
-      },
-      {
-        id: "medium",
-        icon: "Gauge",
-        label: { fr: "Moyenne — plusieurs étapes", en: "Medium — several steps" },
-        scores: { easy_ia: 1, easy_microsoft: 1 },
-      },
-      {
-        id: "complex",
-        icon: "Network",
-        label: { fr: "Élevée — intégrations, logique produit", en: "High — integrations, product logic" },
-        scores: { gen_ia_factory: 3 },
-        because: {
-          fr: "Une forte complexité oriente vers un accompagnement GEN IA Factory.",
-          en: "High complexity points to GEN IA Factory support.",
-        },
-      },
-    ],
-  },
-
-  {
-    id: "custom_dev",
-    eyebrow: { fr: "Le développement", en: "Development" },
-    title: {
-      fr: "Un développement sur mesure semble-t-il nécessaire ?",
-      en: "Does custom development seem necessary?",
-    },
-    required: true,
-    showIf: (a) => !isExploring(a) && !(a.complexity ?? []).includes("simple"),
-    options: [
-      {
-        id: "no_dev",
-        icon: "ThumbsUp",
-        label: { fr: "Non, une solution guidée suffira", en: "No, a guided solution will do" },
-        scores: { easy_ia: 1 },
-      },
-      {
-        id: "maybe_dev",
-        icon: "HelpCircle",
-        label: { fr: "Peut-être", en: "Maybe" },
-        scores: { gen_ia_factory: 1, generic: 1 },
-      },
-      {
-        id: "yes_dev",
-        icon: "Code2",
-        label: { fr: "Oui, clairement", en: "Yes, clearly" },
-        scores: { gen_ia_factory: 3 },
-        because: {
-          fr: "Un développement sur mesure assumé appelle la GEN IA Factory.",
-          en: "Clear custom development calls for the GEN IA Factory.",
-        },
-      },
-    ],
-  },
-
-  {
-    id: "market_tool",
-    eyebrow: { fr: "Le marché", en: "The market" },
-    title: {
-      fr: "Un outil du marché pourrait-il déjà répondre à votre besoin ?",
-      en: "Could a market tool already meet your need?",
-    },
-    required: true,
-    showIf: (a) =>
-      !isExploring(a) && !(a.solution_shape ?? []).includes("buy"),
-    options: [
-      {
-        id: "market_yes",
-        icon: "ShoppingBag",
-        label: { fr: "Oui, probablement", en: "Yes, probably" },
-        scores: { external_tool: 3 },
-        because: {
-          fr: "Acheter une solution existante peut être plus rapide et économique.",
-          en: "Buying an existing solution can be faster and cheaper.",
-        },
-      },
-      {
-        id: "market_maybe",
-        icon: "HelpCircle",
-        label: { fr: "Je ne sais pas", en: "I'm not sure" },
-        scores: { generic: 1 },
-      },
-      {
-        id: "market_no",
-        icon: "Fingerprint",
-        label: { fr: "Non, c'est spécifique à KIABI", en: "No, it's specific to KIABI" },
-        scores: { easy_ia: 1 },
-      },
-    ],
-  },
-
-  {
-    id: "readiness",
-    eyebrow: { fr: "Votre maturité", en: "Your readiness" },
-    title: { fr: "Où en êtes-vous dans votre réflexion ?", en: "Where are you in your thinking?" },
     required: true,
     options: [
       {
         id: "ready",
         icon: "Rocket",
-        label: { fr: "C'est clair, prêt(e) pour un créneau d'1h", en: "It's clear, ready for a 1-hour session" },
-        scores: { easy_ia: 1, easy_microsoft: 1 },
+        label: {
+          fr: "J'ai un besoin concret et j'aimerais avancer dessus bientôt",
+          en: "I have a concrete need and want to move on it soon",
+        },
+        // Neutral on purpose: routing is driven by Q2–Q5.
+        scores: {},
+      },
+      {
+        id: "fuzzy",
+        icon: "PencilRuler",
+        label: {
+          fr: "J'ai une idée, mais elle est encore floue à cadrer",
+          en: "I have an idea, but it's still fuzzy and needs shaping",
+        },
+        scores: { generic: 2 },
         because: {
-          fr: "Vous êtes prêt(e) à passer à l'action lors d'un créneau d'1 heure.",
-          en: "You're ready to take action in a 1-hour session.",
+          fr: "Votre besoin mérite d'être clarifié avec un interlocuteur avant d'aller plus loin.",
+          en: "Your need would benefit from being clarified with someone before going further.",
         },
       },
       {
-        id: "shaping",
-        icon: "PencilRuler",
-        label: { fr: "J'ai une idée à cadrer", en: "I have an idea to shape" },
+        id: "exploring",
+        icon: "Compass",
+        label: {
+          fr: "Je me renseigne, je veux surtout voir ce qui est possible",
+          en: "I'm just looking around, mainly to see what's possible",
+        },
+        scores: { faq: 4 },
+        because: {
+          fr: "Vous êtes en phase de découverte : autant explorer les possibilités d'abord.",
+          en: "You're in discovery mode: best to explore the possibilities first.",
+        },
+      },
+    ],
+  },
+
+  {
+    id: "main_pain",
+    eyebrow: { fr: "Votre quotidien", en: "Your day-to-day" },
+    title: { fr: "Qu'est-ce qui vous pèse le plus aujourd'hui ?", en: "What weighs on you most today?" },
+    subtitle: {
+      fr: "Choisissez ce qui ressemble le plus à votre situation.",
+      en: "Pick what most resembles your situation.",
+    },
+    required: true,
+    options: [
+      {
+        id: "content",
+        icon: "Feather",
+        label: {
+          fr: "Je passe trop de temps à écrire, résumer, traduire ou retrouver de l'information",
+          en: "I spend too much time writing, summarising, translating or finding information",
+        },
+        scores: { easy_ia: 3 },
+        because: {
+          fr: "Vous passez beaucoup de temps sur de l'écrit, de la traduction et de la recherche d'information.",
+          en: "You spend a lot of time on writing, translation and finding information.",
+        },
+      },
+      {
+        id: "manual",
+        icon: "Workflow",
+        label: {
+          fr: "Je refais sans cesse les mêmes manipulations à la main (ressaisir, recopier, compiler, relancer)",
+          en: "I keep redoing the same manual steps by hand (re-entering, copying, compiling, chasing)",
+        },
+        scores: { easy_microsoft: 3 },
+        because: {
+          fr: "Vous répétez souvent les mêmes manipulations à la main, ce qui peut être automatisé.",
+          en: "You often repeat the same manual steps by hand — something that can be automated.",
+        },
+      },
+      {
+        id: "team_tool",
+        icon: "Users",
+        label: {
+          fr: "Mon équipe manque d'un outil commun pour travailler ou suivre son activité",
+          en: "My team lacks a shared tool to work or track its activity",
+        },
+        scores: { easy_microsoft: 1, gen_ia_factory: 1 },
+        because: {
+          fr: "Votre équipe gagnerait à disposer d'un outil commun pour travailler ou se suivre.",
+          en: "Your team would benefit from a shared tool to work or keep track.",
+        },
+      },
+      {
+        id: "ambitious",
+        icon: "Sparkles",
+        label: {
+          fr: "Je veux mettre en place quelque chose de nouveau et ambitieux, qui n'existe pas encore chez nous",
+          en: "I want to set up something new and ambitious that doesn't exist here yet",
+        },
+        scores: { gen_ia_factory: 2 },
+        because: {
+          fr: "Vous portez un projet nouveau et ambitieux, qui va au-delà d'un coup de pouce ponctuel.",
+          en: "You're driving a new, ambitious project that goes beyond a quick fix.",
+        },
+      },
+    ],
+  },
+
+  {
+    id: "work_location",
+    eyebrow: { fr: "Votre contexte", en: "Your context" },
+    title: {
+      fr: "Où vivent surtout vos informations et votre travail aujourd'hui ?",
+      en: "Where do your information and work mostly live today?",
+    },
+    required: true,
+    showIf: (a) => !isExploring(a),
+    options: [
+      {
+        id: "documents",
+        icon: "BookOpen",
+        label: {
+          fr: "Dans des documents, des textes, des connaissances à exploiter",
+          en: "In documents, text and knowledge to draw on",
+        },
+        scores: { easy_ia: 2 },
+        because: {
+          fr: "Votre travail s'appuie surtout sur des documents et des connaissances à exploiter.",
+          en: "Your work mainly relies on documents and knowledge to draw on.",
+        },
+      },
+      {
+        id: "office_shared",
+        icon: "FolderTree",
+        label: {
+          fr: "Dans des fichiers, des mails et des espaces partagés que j'utilise tous les jours",
+          en: "In files, emails and shared spaces I use every day",
+        },
+        scores: { easy_microsoft: 2 },
+        because: {
+          fr: "Votre travail vit dans des fichiers, mails et espaces partagés du quotidien.",
+          en: "Your work lives in everyday files, emails and shared spaces.",
+        },
+      },
+      {
+        id: "scattered_systems",
+        icon: "Network",
+        label: {
+          fr: "Réparti dans plusieurs logiciels internes qui ne se parlent pas",
+          en: "Spread across several internal systems that don't talk to each other",
+        },
+        scores: { gen_ia_factory: 2 },
+        because: {
+          fr: "Vos informations sont éparpillées dans plusieurs logiciels qui ne communiquent pas.",
+          en: "Your information is scattered across several systems that don't communicate.",
+        },
+      },
+      {
+        id: "unsure",
+        icon: "HelpCircle",
+        label: { fr: "Honnêtement, je ne sais pas trop", en: "Honestly, I'm not really sure" },
+        scores: { generic: 1 },
+      },
+    ],
+  },
+
+  {
+    id: "usage_scale",
+    eyebrow: { fr: "L'usage", en: "The usage" },
+    title: {
+      fr: "Le résultat servira surtout à qui, et à quelle fréquence ?",
+      en: "Who will the result mainly serve, and how often?",
+    },
+    required: true,
+    showIf: (a) => !isExploring(a),
+    options: [
+      {
+        id: "me_occasional",
+        icon: "Feather",
+        label: { fr: "Surtout à moi, de temps en temps", en: "Mainly me, every now and then" },
+        scores: { easy_ia: 1 },
+        because: {
+          fr: "C'est avant tout un besoin individuel et ponctuel.",
+          en: "It's above all an individual, occasional need.",
+        },
+      },
+      {
+        id: "team_regular",
+        icon: "Users",
+        label: { fr: "À moi ou mon équipe, de façon régulière", en: "Me or my team, on a regular basis" },
+        scores: { easy_microsoft: 2 },
+        because: {
+          fr: "Le résultat servira régulièrement à toute une équipe.",
+          en: "The result will serve a whole team on a regular basis.",
+        },
+      },
+      {
+        id: "org_wide",
+        icon: "Layers",
+        label: {
+          fr: "À toute une organisation, comme un outil sur lequel on s'appuie vraiment",
+          en: "A whole organisation, as a tool people genuinely rely on",
+        },
+        scores: { gen_ia_factory: 3 },
+        because: {
+          fr: "Le résultat doit servir largement, comme un outil sur lequel on s'appuie vraiment.",
+          en: "The result must serve broadly, like a tool people genuinely rely on.",
+        },
+      },
+      {
+        id: "one_off",
+        icon: "Gauge",
+        label: { fr: "Ce serait ponctuel, pour un cas précis", en: "It would be one-off, for a specific case" },
+        scores: { easy_ia: 1, external_tool: 1 },
+        because: {
+          fr: "C'est un besoin ponctuel, sur un cas bien précis.",
+          en: "It's a one-off need, for a very specific case.",
+        },
+      },
+    ],
+  },
+
+  {
+    id: "specificity",
+    eyebrow: { fr: "La nature du besoin", en: "The nature of the need" },
+    title: { fr: "Diriez-vous que votre besoin est…", en: "Would you say your need is…" },
+    required: true,
+    showIf: (a) => !isExploring(a),
+    options: [
+      {
+        id: "very_specific",
+        icon: "Fingerprint",
+        label: {
+          fr: "Très spécifique à notre métier, à notre façon de travailler ici",
+          en: "Very specific to our job, to the way we work here",
+        },
+        scores: { gen_ia_factory: 1, easy_ia: 1 },
+        because: {
+          fr: "Votre besoin est très spécifique à votre façon de travailler.",
+          en: "Your need is very specific to the way you work.",
+        },
+      },
+      {
+        id: "common",
+        icon: "Globe",
+        label: {
+          fr: "Assez courant, sûrement partagé par beaucoup d'autres équipes ou entreprises",
+          en: "Fairly common, probably shared by many other teams or companies",
+        },
+        scores: { external_tool: 3 },
+        because: {
+          fr: "C'est un besoin répandu, que d'autres ont probablement déjà résolu de leur côté.",
+          en: "It's a widespread need that others have probably already solved on their side.",
+        },
+      },
+      {
+        id: "mixed",
+        icon: "Blend",
+        label: { fr: "Un peu des deux", en: "A bit of both" },
         scores: { generic: 1 },
       },
       {
-        id: "learn_first",
-        icon: "BookOpen",
-        label: { fr: "Je veux d'abord explorer / me documenter", en: "I'd rather explore / read up first" },
-        scores: { faq: 3 },
-        because: {
-          fr: "Vous préférez d'abord explorer : des ressources vous aideront à mûrir le besoin.",
-          en: "You'd rather explore first — resources will help mature the need.",
-        },
+        id: "dunno",
+        icon: "HelpCircle",
+        label: { fr: "Je ne sais pas encore", en: "I don't know yet" },
+        scores: { generic: 1 },
       },
     ],
   },
