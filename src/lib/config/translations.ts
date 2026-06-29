@@ -138,6 +138,7 @@ export const DICT = {
     },
     startGuide: { fr: "Lancer le guide", en: "Start the guide" },
     copyLink: { fr: "Copier le lien", en: "Copy link" },
+    copyEmail: { fr: "Copier l'e-mail", en: "Copy email" },
     copied: { fr: "Copié !", en: "Copied!" },
   },
   admin: {

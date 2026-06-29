@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useLang } from "@/lib/i18n/LanguageProvider";
 import { Icon } from "@/components/ui/Icon";
 import { LinkButton } from "@/components/ui/Button";
@@ -11,6 +12,13 @@ import { cn } from "@/lib/utils";
 /**
  * Contact CTA with graceful placeholder handling. Used for GEN IA Factory
  * (Younes), External tool (Justine) and the generic innovation contact.
+ *
+ * Behaviour:
+ *  - if `url` is set      → a "Get in touch" button (opens the link)
+ *  - else if `email` set  → the email shown as copyable text (no mailto, so
+ *                            nothing auto-launches Outlook — the employee
+ *                            copies it and writes from wherever they like)
+ *  - else                 → a "to be completed" placeholder badge
  */
 export function ContactCard({
   contact,
@@ -22,11 +30,24 @@ export function ContactCard({
   accentClass?: string;
 }) {
   const { t, tx } = useLang();
+  const [copied, setCopied] = useState(false);
+
   const initials = contact.name
     ? contact.name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase()
     : "·";
-  const href = contact.url || (contact.email ? `mailto:${contact.email}` : "");
-  const hasContact = Boolean(href);
+  const hasUrl = Boolean(contact.url);
+  const hasEmail = Boolean(contact.email);
+
+  const copyEmail = async () => {
+    try {
+      await navigator.clipboard.writeText(contact.email);
+      setCopied(true);
+      trackContactClicked(analyticsKey);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard unavailable — the address stays selectable as text */
+    }
+  };
 
   return (
     <div className="relative overflow-hidden rounded-3xl border border-navy/[0.07] bg-white p-6 shadow-card sm:p-7">
@@ -49,16 +70,32 @@ export function ContactCard({
         </div>
 
         <div className="shrink-0">
-          {hasContact ? (
+          {hasUrl ? (
             <LinkButton
-              href={href}
-              target={contact.url ? "_blank" : undefined}
+              href={contact.url}
+              target="_blank"
               rel="noopener noreferrer"
               onClick={() => trackContactClicked(analyticsKey)}
             >
               {t("result.contactVia")}
-              <Icon name={contact.email && !contact.url ? "Mail" : "ExternalLink"} className="h-4 w-4" />
+              <Icon name="ExternalLink" className="h-4 w-4" />
             </LinkButton>
+          ) : hasEmail ? (
+            <div className="flex items-center gap-2 rounded-2xl border border-navy/10 bg-surface-soft p-1.5 pl-3">
+              <Icon name="Mail" className="h-4 w-4 shrink-0 text-brand" />
+              <span className="min-w-0 select-all break-all text-sm font-semibold text-navy">
+                {contact.email}
+              </span>
+              <button
+                type="button"
+                onClick={copyEmail}
+                aria-label={t("result.copyEmail")}
+                title={copied ? t("result.copied") : t("result.copyEmail")}
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-white text-ink-muted ring-1 ring-navy/10 transition-colors hover:text-brand"
+              >
+                <Icon name={copied ? "Check" : "Copy"} className="h-4 w-4" />
+              </button>
+            </div>
           ) : (
             <Badge tone="amber" className="normal-case">
               <Icon name="Mail" className="h-3.5 w-3.5" />

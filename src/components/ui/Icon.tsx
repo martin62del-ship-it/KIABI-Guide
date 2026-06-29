@@ -3,7 +3,7 @@ import {
   AppWindow, FolderTree, LayoutGrid, BarChart3, Bot, GitBranch, ShoppingBag,
   Feather, Gauge, Network, ThumbsUp, Code2, Fingerprint, Rocket, PencilRuler,
   BookOpen, Users, ArrowRight, ArrowLeft, Check, Calendar, Mail, ExternalLink,
-  Globe, Lock, LogOut, Sparkle, Lightbulb, Wand2, type LucideIcon,
+  Globe, Lock, LogOut, Sparkle, Lightbulb, Wand2, Copy, type LucideIcon,
 } from "lucide-react";
 
 const MAP: Record<string, LucideIcon> = {
@@ -11,7 +11,7 @@ const MAP: Record<string, LucideIcon> = {
   AppWindow, FolderTree, LayoutGrid, BarChart3, Bot, GitBranch, ShoppingBag,
   Feather, Gauge, Network, ThumbsUp, Code2, Fingerprint, Rocket, PencilRuler,
   BookOpen, Users, ArrowRight, ArrowLeft, Check, Calendar, Mail, ExternalLink,
-  Globe, Lock, LogOut, Sparkle, Lightbulb, Wand2,
+  Globe, Lock, LogOut, Sparkle, Lightbulb, Wand2, Copy,
 };
 
 /** Resolve a config icon name to a lucide icon (falls back to Sparkles). */
