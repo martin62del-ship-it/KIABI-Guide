@@ -86,7 +86,7 @@ export const PLACEHOLDERS = {
   // GEN IA Factory owner (complex / custom dev needs)
   GEN_IA_FACTORY_CONTACT: {
     name: "Younes Ouamari",
-    email: "", // TODO: add real email before production
+    email: "younes.ouamari@partner.kiabi.com",
     url: "",
     note: {
       fr: "Référent GEN IA Factory — pour les besoins complexes nécessitant du développement sur mesure.",
